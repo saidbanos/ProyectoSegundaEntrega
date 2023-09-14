@@ -2,6 +2,7 @@ import { Router } from "express";
 import ProductManager from "../dao/dbMongo/products.js";
 import path from "path";
 import __dirname from "../utils.js";
+import { productsModel } from "../dao/models/products.js";
 
 const router = Router();
 
@@ -16,9 +17,51 @@ router.use((req, res, next) => {
 
 router.get("/", async (req, res) => {
 	try {
-		const { limit } = req.query;
-		const products = await productManager.getAll(limit);
-		res.send(products);
+		const limit = parseInt(req.query.limit) || 10;
+		const page = parseInt(req.query.page) || 1;
+		const sortOrder = req.query.sort === "desc" ? -1 : 1;
+		let sort = {};
+		if (req.query.sort) {
+			sort.price = sortOrder;
+		}
+
+		const query = {};
+		if (req.query.query) {
+			if (req.query.query === "instock") {
+				query.stock = { $gt: 0 };
+			} else {
+				query.category = req.query.query;
+			}
+		}
+
+		const options = {
+			page: page,
+			limit: limit,
+			sort: sort,
+		};
+
+		const result = await productsModel.paginate(query, options);
+
+		const products = result.docs.map((doc) => doc.toObject());
+
+		const response = {
+			status: "success",
+			payload: products,
+			totalPages: result.totalPages,
+			prevPage: result.prevPage,
+			nextPage: result.nextPage,
+			page: result.page,
+			hasPrevPage: result.hasPrevPage,
+			hasNextPage: result.hasNextPage,
+			prevLink: result.hasPrevPage
+				? `${req.baseUrl}?page=${result.prevPage}`
+				: null,
+			nextLink: result.hasNextPage
+				? `${req.baseUrl}?page=${result.nextPage}`
+				: null,
+		};
+
+		res.json(response); // This line has changed to send a JSON response instead of rendering a view
 	} catch (error) {
 		console.error(error);
 		res.status(500).send("Error getting products from the database.");
