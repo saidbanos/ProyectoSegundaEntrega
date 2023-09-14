@@ -1,5 +1,4 @@
 import { Router } from "express";
-
 import ProductManager from "../dao/dbFileSystem/ProductManager.js";
 import path from "path";
 import __dirname from "../utils.js";
@@ -13,9 +12,51 @@ const productManager = new ProductManager(productsPath);
 
 router.get("/", async (req, res) => {
 	try {
-		const productDocs = await productsModel.find();
-		const products = productDocs.map((doc) => doc.toObject());
-		res.render("index", { products });
+		const limit = parseInt(req.query.limit) || 10;
+		const page = parseInt(req.query.page) || 1;
+		const sortOrder = req.query.sort === "desc" ? -1 : 1;
+		let sort = {};
+		if (req.query.sort) {
+			sort.price = sortOrder;
+		}
+
+		const query = {};
+		if (req.query.query) {
+			if (req.query.query === "instock") {
+				query.stock = { $gt: 0 };
+			} else {
+				query.category = req.query.query;
+			}
+		}
+
+		const options = {
+			page: page,
+			limit: limit,
+			sort: sort,
+		};
+
+		const result = await productsModel.paginate(query, options);
+
+		const products = result.docs.map((doc) => doc.toObject());
+
+		const response = {
+			status: "success",
+			payload: products,
+			totalPages: result.totalPages,
+			prevPage: result.prevPage,
+			nextPage: result.nextPage,
+			page: result.page,
+			hasPrevPage: result.hasPrevPage,
+			hasNextPage: result.hasNextPage,
+			prevLink: result.hasPrevPage
+				? `${req.baseUrl}?page=${result.prevPage}`
+				: null,
+			nextLink: result.hasNextPage
+				? `${req.baseUrl}?page=${result.nextPage}`
+				: null,
+		};
+
+		res.render("index", { products: response.payload, pageInfo: response });
 	} catch (error) {
 		console.error(error);
 		res.status(500).send("Internal server error");
