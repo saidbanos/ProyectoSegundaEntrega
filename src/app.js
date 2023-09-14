@@ -13,6 +13,20 @@ import mongoose from "mongoose";
 import { productsModel } from "./dao/models/products.js";
 import { messagesModel } from "./dao/models/messages.js";
 
+async function connectToDb() {
+    try {
+		console.log('Connecting to MongoDB ...');
+        await mongoose.connect("mongodb+srv://CoderUser:Ag9W4iSW7LWPNtsZ@cluster0.hwubstf.mongodb.net/ecommerce", {
+            useNewUrlParser: true,
+            useUnifiedTopology: true
+        });
+        console.log('Connected to MongoDB');
+    } catch (error) {
+        console.error('Error connecting to MongoDB:', error);
+        process.exit(1); // Exit the process with a failure code
+    }
+}
+
 const app = express();
 
 app.engine("handlebars", handlebars.engine());
@@ -27,93 +41,118 @@ app.use((req, res, next) => {
 	next();
 });
 
-mongoose.connect(
-	"mongodb+srv://CoderUser:Ag9W4iSW7LWPNtsZ@cluster0.hwubstf.mongodb.net/ecommerce"
-);
+// ... [previous app configuration and middleware]
 
-const port = 8080;
-const server = app.listen(port, () => {
-	console.log(`Server active on port: ${port}`);
-});
-const socketServer = new Server(server);
+(async () => {
+    // Connect to the database
+    await connectToDb();
 
-const productsPath = path.join(__dirname, "..", "src", "productos.json");
+    // Then start your server
+	const port = 8080;
+    const server = app.listen(port, () => {
+        console.log(`Server active on port: ${port}`);
+    });
 
-const productManager = new ProductManager(productsPath, socketServer);
+	const socketServer = new Server(server);
 
-app.use("/", viewsRoute);
-app.use(
-	"/realtimeproducts",
-	realTimeProductsRoute({ socketServer, productManager })
-);
-
-app.use("/api/products", productsRouter);
-app.use("/api/carts", cartsRouter);
-
-app.use((err, req, res, next) => {
-	console.error(err);
-	res.status(500).send("Something went wrong on app.js");
-});
-
-const messages = [];
-socketServer.on("connection", async (socket) => {
-	console.log("Nuevo cliente conectado");
-
-	try {
-		const priorMessages = await messagesModel.find();
-		socket.emit("messageLogs", priorMessages);
-	} catch (error) {
-		console.error("Error fetching messages from DB", error);
-	}
-
-	socket.on("message", async (data) => {
+	const productsPath = path.join(__dirname, "..", "src", "productos.json");
+	
+	const productManager = new ProductManager(productsPath, socketServer);
+	
+	app.use("/", viewsRoute);
+	app.use(
+		"/realtimeproducts",
+		realTimeProductsRoute({ socketServer, productManager })
+	);
+	
+	app.use("/api/products", productsRouter);
+	app.use("/api/carts", cartsRouter);
+	
+	app.use((err, req, res, next) => {
+		console.error(err);
+		res.status(500).send("Something went wrong on app.js");
+	});
+	
+	const messages = [];
+	socketServer.on("connection", async (socket) => {
+		console.log("Nuevo cliente conectado");
+	
 		try {
-			let userRecord = await messagesModel.findOne({ user: data.user });
-
-			if (userRecord) {
-				userRecord.messages.push(data.message);
-				await userRecord.save();
-			} else {
-				const newUserMessage = new messagesModel({
-					user: data.user,
-					messages: [data.message],
-				});
-				await newUserMessage.save();
-			}
-
-			const allMessages = await messagesModel.find();
-			socketServer.emit("messageLogs", allMessages);
+			const priorMessages = await messagesModel.find();
+			socket.emit("messageLogs", priorMessages);
 		} catch (error) {
-			console.error("Error processing message", error);
+			console.error("Error fetching messages from DB", error);
 		}
-	});
-
-	socket.on("authenticated", (data) => {
-		socket.broadcast.emit("newUserConnected", data);
-	});
-
-	socket.on("deleteProduct", async (productId) => {
-		try {
-			const result = await productsModel.deleteOne({ _id: productId });
-
-			if (result.deletedCount > 0) {
+	
+		socket.on("message", async (data) => {
+			try {
+				let userRecord = await messagesModel.findOne({ user: data.user });
+	
+				if (userRecord) {
+					userRecord.messages.push(data.message);
+					await userRecord.save();
+				} else {
+					const newUserMessage = new messagesModel({
+						user: data.user,
+						messages: [data.message],
+					});
+					await newUserMessage.save();
+				}
+	
+				const allMessages = await messagesModel.find();
+				socketServer.emit("messageLogs", allMessages);
+			} catch (error) {
+				console.error("Error processing message", error);
+			}
+		});
+	
+		socket.on("authenticated", (data) => {
+			socket.broadcast.emit("newUserConnected", data);
+		});
+	
+		socket.on("deleteProduct", async (productId) => {
+			try {
+				const result = await productsModel.deleteOne({ _id: productId });
+	
+				if (result.deletedCount > 0) {
+					const updatedProducts = await productsModel.find();
+					socketServer.emit("productUpdate", updatedProducts);
+				}
+			} catch (error) {
+				console.error("Error deleting product", error);
+			}
+		});
+	
+		socket.on("addProduct", async (productData) => {
+			try {
+				const newProduct = new productsModel(productData);
+				await newProduct.save();
+	
 				const updatedProducts = await productsModel.find();
 				socketServer.emit("productUpdate", updatedProducts);
+			} catch (error) {
+				console.error("Error adding product", error);
 			}
-		} catch (error) {
-			console.error("Error deleting product", error);
-		}
+		});
 	});
 
-	socket.on("addProduct", async (productData) => {
-		try {
-			const newProduct = new productsModel(productData);
-			await newProduct.save();
 
-			const updatedProducts = await productsModel.find();
-			socketServer.emit("productUpdate", updatedProducts);
-		} catch (error) {
-			console.error("Error adding product", error);
-		}
-	});
-});
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // ... [rest of your socket.io setup and handlers]
+})();
+
+
+
+
