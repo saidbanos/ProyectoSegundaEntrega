@@ -1,5 +1,18 @@
 <div>
     <h1>Products</h1>
+
+    <div class="pagination" style="text-align: center; font-size: 20px; font-weight: bold;">
+        {{#if pageInfo.hasPrevPage}}
+            <a href="{{pageInfo.prevLink}}" style="margin-right: 15px;">Previous</a>
+        {{/if}}
+
+        <span>Page {{pageInfo.page}} of {{pageInfo.totalPages}}</span>
+
+        {{#if pageInfo.hasNextPage}}
+            <a href="{{pageInfo.nextLink}}" style="margin-left: 15px;">Next</a>
+        {{/if}}
+    </div>
+
     <ul>
     {{#each products}}
         <li>
@@ -21,6 +34,7 @@
         <br>
     {{/each}}
     </ul>
+
 </div>
 <script src="/socket.io/socket.io.js"></script>
 <script src="/js/index.js"></script>
