@@ -65,24 +65,22 @@ router.get("/", async (req, res) => {
 });
 
 router.get("/carts/:cid", async (req, res) => {
-    try {
-        const cid = req.params.cid;
+	try {
+		const cid = req.params.cid;
 
-        // Use the built-in fetch API to make a GET request
-        const cartResponse = await fetch(`http://localhost:8080/api/carts/${cid}`);
-        
-        if (!cartResponse.ok) {
-            throw new Error(`Cart with id ${cid} not found`);
-        }
+		const cartResponse = await fetch(`http://localhost:8080/api/carts/${cid}`);
 
-        const cartData = await cartResponse.json();
+		if (!cartResponse.ok) {
+			throw new Error(`Cart with id ${cid} not found`);
+		}
 
-        // Render the cart view and pass the cart data as a variable
-        res.render("cart", { cartData });
-    } catch (error) {
-        console.error(error);
-        res.status(500).send("Internal server error");
-    }
+		const cartData = await cartResponse.json();
+
+		res.render("cart", { cartData });
+	} catch (error) {
+		console.error(error);
+		res.status(500).send("Internal server error");
+	}
 });
 
 export default router;

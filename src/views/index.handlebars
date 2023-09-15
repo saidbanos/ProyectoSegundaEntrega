@@ -2,7 +2,7 @@
     <h1>Products</h1>
 
     <div style="text-align: center; margin-bottom: 20px;">
-        <div> <!-- Wrap the input field and message in a div -->
+        <div>
             <label for="cartIdInput">Cart ID:</label>
             <input type="text" id="cartIdInput" placeholder="Enter Cart ID" style="width: 300px;">
             <button id="goToCartBtn" style="margin-left: 10px;">Go to Cart</button>
@@ -44,7 +44,6 @@
 
                 <button class="addToCartBtn" data-product-id="{{this._id}}" data-product-index="{{@index}}">Add to Cart</button>
 
-                <!-- Place the success message within the same parent li -->
                 <div class="successMessage" data-product-index="{{@index}}" style="display: none; text-align: center;">
                     Product added to the cart successfully!
                 </div>
