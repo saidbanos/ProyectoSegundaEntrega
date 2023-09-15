@@ -1,7 +1,24 @@
 document.addEventListener('DOMContentLoaded', () => {
     const cartIdInput = document.getElementById('cartIdInput');
     const errorMessage = document.getElementById('errorMessage'); // Get the global error message element
-
+	const goToCartBtn = document.getElementById('goToCartBtn'); // Get the "Go to Cart" button
+  
+    // Add a click event listener to the "Go to Cart" button
+    goToCartBtn.addEventListener('click', () => {
+        const cartId = cartIdInput.value;
+        
+        if (cartId && cartId !== '') {
+            // If a cart ID is provided, navigate to the new route
+            window.location.href = `/carts/${cartId}`;
+        } else {
+            // Show the "Please enter a Cart ID" message
+            errorMessage.style.display = 'block';
+            setTimeout(() => {
+                errorMessage.style.display = 'none';
+            }, 3000); // 3000 milliseconds = 3 seconds
+        }
+    });
+	
     document.addEventListener('click', async function (e) {
         if (e.target && e.target.className === 'addToCartBtn') {
             const productId = e.target.getAttribute('data-product-id');

@@ -1,0 +1,22 @@
+<!-- views/cart.handlebars -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Add your head content here -->
+</head>
+<body>
+    <h1>Cart</h1>
+    <h2>Cart ID: {{cartData._id}}</h2>
+    
+    <ul>
+        {{#each cartData.products}}
+            <li>
+                <strong>Title:</strong> {{this.title}}<br>
+                <strong>ID:</strong> {{this._id}}<br>
+                <strong>Description:</strong> {{this.description}}<br>
+                <!-- Add more product details here -->
+            </li>
+        {{/each}}
+    </ul>
+</body>
+</html>
