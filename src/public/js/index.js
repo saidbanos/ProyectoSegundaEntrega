@@ -1,52 +1,49 @@
-const socket = io();
-let user;
-let chatBox = document.getElementById("chatBox");
-
-Swal.fire({
-	title: "Identificate",
-	input: "text",
-	text: "Ingresa el usuario para identificarte",
-	inputValidator: (value) => {
-		return !value && "Necesitas escribir un nombre de usuario";
-	},
-	allowOutsideClick: false,
-}).then((result) => {
-	user = result.value;
-	socket.emit("authenticated", user);
-});
-
-chatBox.addEventListener("keyup", (evt) => {
-	if (evt.key === "Enter") {
-		if (chatBox.value.trim().length > 0) {
-			socket.emit("message", { user: user, message: chatBox.value });
-			chatBox.value = "";
+document.addEventListener('DOMContentLoaded', () => {
+	const cartIdInput = document.getElementById('cartIdInput');
+	const errorMessage = document.getElementById('errorMessage'); // Get the global error message element
+  
+	document.addEventListener('click', async function (e) {
+	  if (e.target && e.target.className === 'addToCartBtn') {
+		const productId = e.target.getAttribute('data-product-id');
+		const cartId = cartIdInput.value;
+  
+		if (!cartId || cartId == '') {
+		  // Show the "Please enter a Cart ID" message globally
+		  errorMessage.style.display = 'block';
+		  setTimeout(() => {
+			errorMessage.style.display = 'none';
+		  }, 3000); // 3000 milliseconds = 3 seconds
+		  return; // Exit the function early if cartId is empty
 		}
-	}
-});
-
-socket.on("messageLogs", (data) => {
-	if (!user) return;
-	let log = document.getElementById("messageLogs");
-	let messages = "";
-	data.forEach((message) => {
-		messages += `<p>${message.user} message:</p>`;
-		messages += `<ul>`;
-		message.messages.forEach((msg) => {
-			messages += `<li>${msg}</li>`;
-		});
-		messages += `</ul>`;
+  
+		// If Cart ID is provided, hide the global error message
+		errorMessage.style.display = 'none';
+  
+		try {
+		  const response = await fetch(`/api/carts/${cartId}/product/${productId}`, {
+			method: 'POST',
+		  });
+  
+		  const data = await response.json();
+  
+		  if (response.status !== 200) {
+			throw new Error(data.error || 'Error adding product to cart.');
+		  }
+  
+		  // Show the success message next to the specific product
+		  const productIndex = e.target.getAttribute('data-product-index');
+		  const successMessage = document.querySelector(`.successMessage[data-product-index="${productIndex}"]`);
+		  successMessage.innerText = 'Product added to the cart successfully!';
+		  successMessage.style.display = 'block';
+  
+		  // Hide the success message after a delay (e.g., 3 seconds)
+		  setTimeout(() => {
+			successMessage.style.display = 'none';
+		  }, 3000); // 3000 milliseconds = 3 seconds
+		} catch (error) {
+		  console.error('Error:', error.message);
+		}
+	  }
 	});
-	log.innerHTML = messages;
-});
-
-socket.on("newUserConnected", (user) => {
-	if (!user) return;
-	Swal.fire({
-		toast: true,
-		position: "top-right",
-		text: "Nuevo usuario conectado",
-		title: `${user} se ha unido al chat`,
-		timer: 3000,
-		showConfirmButton: false,
-	});
-});
+  });
+  

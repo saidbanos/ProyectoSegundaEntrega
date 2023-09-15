@@ -39,6 +39,8 @@ app.set("view engine", "handlebars");
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(__dirname + "/public"));
+app.use('/sweetalert2', express.static(path.join(__dirname, '..', 'node_modules', 'sweetalert2', 'dist')));
+
 
 app.use((req, res, next) => {
 	next();

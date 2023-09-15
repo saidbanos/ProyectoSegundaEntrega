@@ -35,7 +35,13 @@ export default class ProductManager {
 	updateProduct = async (id, productUpdate) => {
 		try {
 			const result = await productsModel.updateOne({ _id: id }, productUpdate);
-			return result;
+			if (result.nModified === 0) {
+				return {
+					error: `Product with id ${id} not updated. It may not exist or no changes were made.`,
+				};
+			}
+			const updatedProduct = await this.getById(id);
+			return updatedProduct;
 		} catch (error) {
 			throw error;
 		}
@@ -44,7 +50,12 @@ export default class ProductManager {
 	deleteProduct = async (id) => {
 		try {
 			const result = await productsModel.deleteOne({ _id: id });
-			return result;
+			if (result.deletedCount === 0) {
+				return {
+					error: `Product with id ${id} not found and therefore not deleted.`,
+				};
+			}
+			return { success: `Product with id ${id} was deleted successfully.` };
 		} catch (error) {
 			throw error;
 		}

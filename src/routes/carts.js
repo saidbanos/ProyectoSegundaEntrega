@@ -44,7 +44,7 @@ router.post("/:cid/product/:pid", async (req, res) => {
 		if (result.error) {
 			res.status(404).send(result.error);
 		} else {
-			res.status(result.nModified > 0 ? 200 : 400).send(result);
+			res.status(200).send(result);
 		}
 	} catch (error) {
 		console.error(error);
@@ -60,9 +60,9 @@ router.delete("/:cid/product/:pid", async (req, res) => {
 		const result = await cartManager.removeProductFromCart(cid, pid);
 
 		if (result.error) {
-			res.status(404).send(result.error);
+			res.status(400).send(result.error);
 		} else {
-			res.status(result.nModified > 0 ? 200 : 400).send(result);
+			res.status(200).send(result);
 		}
 	} catch (error) {
 		console.error(error);
@@ -92,9 +92,9 @@ router.put("/:cid/product/:pid", async (req, res) => {
 		const result = await cartManager.updateProductQuantity(cid, pid, quantity);
 
 		if (result.error) {
-			res.status(404).send(result.error);
+			res.status(400).send(result.error);
 		} else {
-			res.status(result.nModified > 0 ? 200 : 400).send(result);
+			res.status(200).send(result);
 		}
 	} catch (error) {
 		console.error(error);
@@ -105,13 +105,12 @@ router.put("/:cid/product/:pid", async (req, res) => {
 router.delete("/:cid", async (req, res) => {
 	try {
 		const cid = req.params.cid;
-
 		const result = await cartManager.removeAllProductsFromCart(cid);
 
 		if (result.error) {
-			res.status(404).send(result.error);
+			res.status(400).send(result.error);
 		} else {
-			res.status(result.nModified > 0 ? 200 : 400).send(result);
+			res.status(200).send(result);
 		}
 	} catch (error) {
 		console.error(error);

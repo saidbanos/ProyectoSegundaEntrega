@@ -40,6 +40,7 @@ export default class CartManager {
 		const updatedCart = await cartsModel
 			.findOneAndUpdate({ _id: cid }, cart, { new: true })
 			.populate("products.product");
+
 		return updatedCart;
 	};
 
@@ -49,13 +50,18 @@ export default class CartManager {
 			return { error: `Cart with id ${cid} not found` };
 		}
 
-		const result = await cartsModel.updateOne(
+		const productIndex = cart.products.findIndex(
+			(p) => p.product.toString() === pid
+		);
+
+		if (productIndex === -1) {
+			return { error: `Product with id ${pid} not found in cart` };
+		}
+
+		await cartsModel.updateOne(
 			{ _id: cid },
 			{ $pull: { products: { product: pid } } }
 		);
-		if (result.nModified === 0) {
-			return { error: `Product with id ${pid} not found in cart` };
-		}
 
 		const updatedCart = await this.getCartById(cid);
 		return updatedCart;

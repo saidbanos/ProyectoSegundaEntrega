@@ -61,7 +61,7 @@ router.get("/", async (req, res) => {
 				: null,
 		};
 
-		res.json(response); // This line has changed to send a JSON response instead of rendering a view
+		res.json(response);
 	} catch (error) {
 		console.error(error);
 		res.status(500).send("Error getting products from the database.");
@@ -107,8 +107,11 @@ router.put("/:pid", async (req, res) => {
 
 		const result = await productManager.updateProduct(pid, productUpdate);
 
-		const status = result && result.nModified > 0 ? 200 : 400;
-		res.status(status).send(result);
+		if (result.error) {
+			res.status(400).send(result.error);
+		} else {
+			res.status(200).send(result);
+		}
 	} catch (error) {
 		console.error(error);
 		res.status(500).send("Internal server error");
@@ -120,8 +123,11 @@ router.delete("/:pid", async (req, res) => {
 		const pid = req.params.pid;
 		const result = await productManager.deleteProduct(pid);
 
-		const status = result && result.deletedCount > 0 ? 200 : 404;
-		res.status(status).send(result);
+		if (result.error) {
+			res.status(400).send(result.error);
+		} else {
+			res.status(200).send(result);
+		}
 	} catch (error) {
 		console.error(error);
 		res.status(500).send("Internal server error");
