@@ -5,7 +5,7 @@ export default class CartManager {
 	constructor() {}
 
 	getCartById = async (cid) => {
-		return await cartsModel.findOne({ _id: cid });
+		return await cartsModel.findOne({ _id: cid }).populate("products.product");
 	};
 
 	createNewCart = async () => {
@@ -37,8 +37,10 @@ export default class CartManager {
 				quantity: 1,
 			});
 		}
-
-		return await cartsModel.updateOne({ _id: cid }, cart);
+		const updatedCart = await cartsModel
+			.findOneAndUpdate({ _id: cid }, cart, { new: true })
+			.populate("products.product");
+		return updatedCart;
 	};
 
 	removeProductFromCart = async (cid, pid) => {
@@ -51,16 +53,19 @@ export default class CartManager {
 			{ _id: cid },
 			{ $pull: { products: { product: pid } } }
 		);
-
 		if (result.nModified === 0) {
 			return { error: `Product with id ${pid} not found in cart` };
 		}
-		return result;
+
+		const updatedCart = await this.getCartById(cid);
+		return updatedCart;
 	};
 
 	updateCartProducts = async (cid, productsToUpdate) => {
 		try {
-			const cart = await cartsModel.findOne({ _id: cid });
+			const cart = await cartsModel
+				.findOne({ _id: cid })
+				.populate("products.product");
 			if (!cart) {
 				throw new Error(`Cart with ID ${cid} not found.`);
 			}
@@ -84,7 +89,7 @@ export default class CartManager {
 			cart.markModified("products");
 			await cart.save();
 
-			return cart;
+			return await this.getCartById(cid);
 		} catch (error) {
 			console.error("Error in updateCartProducts:", error);
 			throw error;
@@ -98,7 +103,7 @@ export default class CartManager {
 		}
 
 		const productInCart = cart.products.find(
-			(p) => p.product.toString() === pid
+			(p) => p.product._id.toString() === pid
 		);
 
 		if (!productInCart) {
@@ -106,8 +111,8 @@ export default class CartManager {
 		}
 
 		productInCart.quantity = quantity;
-
-		return await cartsModel.updateOne({ _id: cid }, cart);
+		await cartsModel.updateOne({ _id: cid }, cart);
+		return await this.getCartById(cid);
 	};
 
 	removeAllProductsFromCart = async (cid) => {
@@ -120,7 +125,6 @@ export default class CartManager {
 			{ _id: cid },
 			{ $set: { products: [] } }
 		);
-
-		return result;
+		return await this.getCartById(cid);
 	};
 }

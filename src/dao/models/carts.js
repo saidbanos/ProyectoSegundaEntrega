@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { productsModel } from "./products.js";
 
 const cartsCollection = "carts";
 
@@ -10,7 +11,8 @@ const cartsSchema = new mongoose.Schema({
 		type: [
 			{
 				product: {
-					type: String,
+					type: mongoose.Schema.Types.ObjectId,
+					ref: productsModel.modelName,
 				},
 				quantity: Number,
 			},
