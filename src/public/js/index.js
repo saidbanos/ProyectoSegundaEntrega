@@ -3,12 +3,41 @@ document.addEventListener("DOMContentLoaded", () => {
 	const errorMessage = document.getElementById("errorMessage");
 	const goToCartBtn = document.getElementById("goToCartBtn");
 
-	goToCartBtn.addEventListener("click", () => {
+	goToCartBtn.addEventListener("click", async () => {
 		const cartId = cartIdInput.value;
 
-		if (cartId && cartId !== "") {
+		if (!cartId || cartId === "") {
+			errorMessage.innerText = "Please enter a Cart ID.";
+			errorMessage.style.display = "block";
+			setTimeout(() => {
+				errorMessage.style.display = "none";
+			}, 3000);
+			return;
+		}
+
+		errorMessage.style.display = "none";
+
+		if (!/^[0-9a-fA-F]{24}$/.test(cartId)) {
+			errorMessage.innerText = "Invalid Cart ID.";
+			errorMessage.style.display = "block";
+			setTimeout(() => {
+				errorMessage.style.display = "none";
+			}, 3000);
+			return;
+		}
+
+		try {
+			const response = await fetch(`/api/carts/${cartId}`);
+			const data = await response.json();
+
+			if (response.status !== 200) {
+				throw new Error(data.error || "Cart not found.");
+			}
+
 			window.location.href = `/carts/${cartId}`;
-		} else {
+		} catch (error) {
+			console.error("Error:", error.message);
+			errorMessage.innerText = "Cart not found.";
 			errorMessage.style.display = "block";
 			setTimeout(() => {
 				errorMessage.style.display = "none";
