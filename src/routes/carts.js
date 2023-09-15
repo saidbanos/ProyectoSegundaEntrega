@@ -52,4 +52,71 @@ router.post("/:cid/product/:pid", async (req, res) => {
 	}
 });
 
+router.delete("/:cid/product/:pid", async (req, res) => {
+	try {
+		const cid = req.params.cid;
+		const pid = req.params.pid;
+
+		const result = await cartManager.removeProductFromCart(cid, pid);
+
+		if (result.error) {
+			res.status(404).send(result.error);
+		} else {
+			res.status(result.nModified > 0 ? 200 : 400).send(result);
+		}
+	} catch (error) {
+		console.error(error);
+		res.status(500).send("Internal server error");
+	}
+});
+
+router.put("/:cid", async (req, res) => {
+	try {
+		const updatedCart = await cartManager.updateCartProducts(
+			req.params.cid,
+			req.body
+		);
+		res.send(updatedCart);
+	} catch (error) {
+		console.error("Error in PUT /:cid:", error.message);
+		res.status(500).send(`Internal server error: ${error.message}`);
+	}
+});
+
+router.put("/:cid/product/:pid", async (req, res) => {
+	try {
+		const cid = req.params.cid;
+		const pid = req.params.pid;
+		const quantity = req.body.quantity;
+
+		const result = await cartManager.updateProductQuantity(cid, pid, quantity);
+
+		if (result.error) {
+			res.status(404).send(result.error);
+		} else {
+			res.status(result.nModified > 0 ? 200 : 400).send(result);
+		}
+	} catch (error) {
+		console.error(error);
+		res.status(500).send("Internal server error");
+	}
+});
+
+router.delete("/:cid", async (req, res) => {
+	try {
+		const cid = req.params.cid;
+
+		const result = await cartManager.removeAllProductsFromCart(cid);
+
+		if (result.error) {
+			res.status(404).send(result.error);
+		} else {
+			res.status(result.nModified > 0 ? 200 : 400).send(result);
+		}
+	} catch (error) {
+		console.error(error);
+		res.status(500).send("Internal server error");
+	}
+});
+
 export default router;
